@@ -4,6 +4,7 @@
 #include <array>
 #include <random>
 #include <vector>
+#include <algorithm>
 #include "LightsOut.h"
 
 
@@ -35,7 +36,7 @@ bool winCheck(std::vector< std::vector<int> >& gameMap, int& gameSize)
 	{
 		for (int j = 0; j < gameSize; j++)
 		{
-			if (gameMap[i][j] == 0)
+			if (gameMap[i][j] == 1)
 				return false;
 		}
 	}
@@ -53,14 +54,7 @@ void lightSwitch(std::vector< std::vector<int> >& gameMap, int& gameSize, int co
 {
 	if (checkRange(x, gameSize) && checkRange(y, gameSize))
 	{
-		gameMap[x][y] += 1;
-		if (gameMap[x][y] > 1)
-		{
-			if (gameMap[x][y] % 2 == 0)
-				gameMap[x][y] = 0;
-			else
-				gameMap[x][y] = 1;
-		}
+		gameMap[x][y] = (gameMap[x][y] + 1) % 2; // light value > 1: even = 0, odd = 1
 	}
 }
 
@@ -82,37 +76,55 @@ void lightPress(std::vector< std::vector<int> >& gameMap, int& gameSize, int con
 	
 }
 
-void generateMap(std::vector< std::vector<int> >& gameMap, int& gameSize, int& difficulty)
+void generateMap(std::vector< std::vector<int> >& gameMap, int& gameSize, int& difficulty, int& minMoves)
 {
-	if (difficulty < 1)
-		difficulty = 1;
-	else if (difficulty > 100)
-		difficulty = 100;
-
 	std::random_device random; //Will be used to obtain a seed for the random number engine
 	std::mt19937 gen(random()); //Standard mersenne_twister_engine seeded with random()
 	std::uniform_int_distribution<> dis(0, gameSize - 1); // dis(gen)
 
+	//Fills with values of the main game 2D vector with 0
 	for (int i = 0; i < gameSize; i++)
 	{
 		std::vector<int> temp;
 		for (int j = 0; j < gameSize; j++)
 		{
-			temp.push_back(1);
+			temp.push_back(0);
 		}
 		gameMap.push_back(temp);
-	}
+	}	
+
+	//Initializes 2D vector for storing move data
+	//and copies main game vector unto it
+	std::vector<std::vector<int>> moveList;
+	moveList = gameMap;
+
 	while (winCheck(gameMap, gameSize) == 1)
 	{
 		for (int ct = 0; ct < difficulty; ct++)
 		{
 			int row = dis(gen), col = dis(gen);
+
+			//Eliminates redundant moves from the counter
+			//by keeping track of moves in the 2D vector "moveList"
+			lightSwitch(moveList, gameSize, row, col);
+			if (moveList[row][col] == 1)
+			{
+				minMoves++;
+			}
+			else if (moveList[row][col] == 0)
+			{
+				minMoves--;
+				std::cout << "*";
+			}
+				
+
 			lightPress(gameMap, gameSize, row, col);
 			std::cout << "[" << row << "," << col << "]\n";
 		}
 	}
 
-	std::cout << "Lights shuffled " << difficulty << " time(s):\n" << "----------------------\n";
+	std::cout << "Lights shuffled " << difficulty << " time(s).\n";
+	std::cout << "Minimum moves required: " << minMoves << "\n----------------------\n";
 	printMap(gameMap, gameSize);
 }
 
@@ -121,7 +133,7 @@ int main()
 	int gameSize, difficulty;
 	std::vector< std::vector<int> > gameMap;
 	
-	//Game Size
+	//Game Size input with check
 	std::cout << "Input game size: ", std::cin >> gameSize;
 	while (!std::cin || ((gameSize < 1) || (gameSize > 9))) 
 	{
@@ -141,7 +153,7 @@ int main()
 	}
 
 
-	//Shuffles
+	//Shuffles input with check
 	std::cout << "Please select amount of shuffles (1 to 100): \n", std::cin >> difficulty;
 	while (!std::cin || ((difficulty < 1) || (difficulty > 100))) 
 	{
@@ -159,14 +171,14 @@ int main()
 		}
 	}
 
-	
-	generateMap(gameMap, gameSize, difficulty); //Map generation
+	int minMoves = 0;
+	generateMap(gameMap, gameSize, difficulty, minMoves); //Map generation
 
 	//Game loop
 	int userInput = 1, x, y, moves = 0;
 	while (userInput != 9)
 	{
-		//User input coordinates
+		//User input coordinates with check
 		std::cout << "Please input 2 positive numbers as coordinates x (row) and y (col) -- or 9 to close: \n", std::cin >> userInput;
 		while (!std::cin || ((userInput < 0) || (userInput > (gameSize - 1) * 10 + (gameSize - 1))))
 		{
@@ -198,7 +210,8 @@ int main()
 		if (winCheck(gameMap, gameSize) == 1)
 		{
 			std::cout << "\n****************\n*** YOU WIN! ***\n****************\n";
-			std::cout << "All lights switched ON in: " << moves << " move(s).\n";
+			std::cout << "All lights out in: " << moves << " move(s).\n";
+			std::cout << "Minimum moves required to solve: " << minMoves << " move(s).\n";
 			return 0;
 		}
 	}
