@@ -123,24 +123,38 @@ int main()
 	
 	//Game Size
 	std::cout << "Input game size: ", std::cin >> gameSize;
-	while (!std::cin) {
-		std::cin.clear();
-		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		std::cout << "Game size must be a number from 1 to 9. Try again: ", std::cin >> gameSize;
-		while ((gameSize < 1) || (gameSize > 9))
+	while (!std::cin || ((gameSize < 1) || (gameSize > 9))) 
+	{
+		if (!std::cin)
 		{
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			std::cout << "Game size must be a number from 1 to 9. Try again: ", std::cin >> gameSize;
+			continue;
+		}
+		if ((gameSize < 1) || (gameSize > 9))
+		{
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			std::cout << "Game size must be a number from 1 to 9. Try again: ", std::cin >> gameSize;
 		}
 	}
 
+
 	//Shuffles
 	std::cout << "Please select amount of shuffles (1 to 100): \n", std::cin >> difficulty;
-	while (!std::cin) {
-		std::cin.clear();
-		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		std::cout << "Shuffles amount must be a number from 1 to 100. Try again: ", std::cin >> difficulty;
-		while ((difficulty < 1) || (difficulty > 100))
+	while (!std::cin || ((difficulty < 1) || (difficulty > 100))) 
+	{
+		if (!std::cin)
 		{
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			std::cout << "Shuffles amount must be a number from 1 to 100. Try again: ", std::cin >> difficulty;
+		}
+		if ((difficulty < 1) || (difficulty > 100))
+		{
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 			std::cout << "Shuffles amount must be a number from 1 to 100. Try again: ", std::cin >> difficulty;
 		}
 	}
@@ -149,25 +163,34 @@ int main()
 	generateMap(gameMap, gameSize, difficulty); //Map generation
 
 	//Game loop
-	int userInput = 1, x, y;
+	int userInput = 1, x, y, moves = 0;
 	while (userInput != 9)
 	{
 		//User input coordinates
 		std::cout << "Please input 2 positive numbers as coordinates x (row) and y (col) -- or 9 to close: \n", std::cin >> userInput;
-		while (!std::cin) {
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			std::cout << "Coordinates must be integers. Try again: ", std::cin >> userInput;
-
-			while ((userInput < 0) || (userInput > (gameSize - 1) * 10 + (gameSize - 1)))
+		while (!std::cin || ((userInput < 0) || (userInput > (gameSize - 1) * 10 + (gameSize - 1))))
+		{
+			if (!std::cin)
 			{
-				std::cout << "Inputted coordinates are out of range. Try again: ", std::cin >> userInput;
+				std::cin.clear();
+				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+				std::cout << "Coordinates must be integers. Try again: ", std::cin >> userInput;
+			}
+
+			if ((userInput < 0) || (userInput > (gameSize - 1) * 10 + (gameSize - 1)))
+			{
+				std::cin.clear();
+				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			    std::cout << "Inputted coordinates are out of range. Try again: ", std::cin >> userInput;
 			}
 		}
+
 		if (userInput == 9)
 			return 0;
 		x = static_cast<int>(userInput / 10);
 		y = static_cast<int>(userInput % 10);	
+
+		moves++;
 
 		lightPress(gameMap, gameSize, x, y);
 		printMap(gameMap, gameSize);
@@ -175,6 +198,7 @@ int main()
 		if (winCheck(gameMap, gameSize) == 1)
 		{
 			std::cout << "\n****************\n*** YOU WIN! ***\n****************\n";
+			std::cout << "All lights switched ON in: " << moves << " move(s).\n";
 			return 0;
 		}
 	}
